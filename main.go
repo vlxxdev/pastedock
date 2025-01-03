@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 	"golang.design/x/clipboard"
 	"log"
-	"time"
 )
 
 func main() {
@@ -13,19 +15,34 @@ func main() {
 		log.Fatalf("Failed to initialize clipboard: %v", err)
 	}
 
-	fmt.Println("Clipboard monitor is running in the background...")
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Clipboard")
 
-	go func() {
-		lastCopied := ""
-		for {
-			copiedBytes := clipboard.Read(clipboard.FmtText)
-			copiedText := string(copiedBytes)
-			if copiedText != "" && lastCopied != copiedText {
-				lastCopied = copiedText
-				fmt.Printf("New clipboard content: %s\n", copiedText)
-			}
-			time.Sleep(1 * time.Second)
+	textLabel := widget.NewLabel("Clipboard is empty")
+
+	refreshButton := widget.NewButton("Refresh Clipboard", func() {
+		copiedBytes := clipboard.Read(clipboard.FmtText)
+		copiedText := string(copiedBytes)
+		if copiedText == "" {
+			textLabel.SetText("Clipboard is empty")
+		} else {
+			textLabel.SetText(copiedText)
 		}
-	}()
-	select {}
+	})
+
+	clearButton := widget.NewButton("Clear Clipboard", func() {
+		clipboard.Write(clipboard.FmtText, []byte(""))
+		log.Println("Clipboard has been cleared.")
+	})
+
+	content := container.NewVBox(
+		textLabel,
+		refreshButton,
+		clearButton,
+	)
+
+	myWindow.SetContent(content)
+	myWindow.Resize(fyne.NewSize(400, 400))
+
+	myWindow.ShowAndRun()
 }
