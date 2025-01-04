@@ -1,10 +1,9 @@
 package main
 
 import (
+	"clipboard/manager"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 	"golang.design/x/clipboard"
 	"log"
 )
@@ -16,33 +15,14 @@ func main() {
 	}
 
 	myApp := app.New()
-	myWindow := myApp.NewWindow("Clipboard")
+	myWindow := myApp.NewWindow("Clipboard Manager")
 
-	textLabel := widget.NewLabel("Clipboard is empty")
+	cm := manager.NewClipboardManager()
+	ui, historyList := cm.CreateUI()
 
-	refreshButton := widget.NewButton("Refresh Clipboard", func() {
-		copiedBytes := clipboard.Read(clipboard.FmtText)
-		copiedText := string(copiedBytes)
-		if copiedText == "" {
-			textLabel.SetText("Clipboard is empty")
-		} else {
-			textLabel.SetText(copiedText)
-		}
-	})
+	go cm.MonitorClipboard(historyList)
 
-	clearButton := widget.NewButton("Clear Clipboard", func() {
-		clipboard.Write(clipboard.FmtText, []byte(""))
-		log.Println("Clipboard has been cleared.")
-	})
-
-	content := container.NewVBox(
-		textLabel,
-		refreshButton,
-		clearButton,
-	)
-
-	myWindow.SetContent(content)
+	myWindow.SetContent(ui)
 	myWindow.Resize(fyne.NewSize(400, 400))
-
 	myWindow.ShowAndRun()
 }
