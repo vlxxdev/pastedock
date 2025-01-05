@@ -12,6 +12,7 @@ A simple and efficient clipboard manager built with [Fyne](https://fyne.io/) and
 
 ## Screenshots
 
+![Clipboard Manager Screenshot](screenshot/img_1.png)
 ![Clipboard Manager Screenshot](screenshot/img.png)
 
 ## Requirements
