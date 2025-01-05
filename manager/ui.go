@@ -9,17 +9,23 @@ import (
 	"log"
 )
 
+const maxLength = 100
+
 func (cm *ClipboardManager) CreateUI() (fyne.CanvasObject, *widget.List) {
 	historyList := widget.NewList(
 		func() int {
 			return len(cm.History)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{})
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
 			entry := cm.History[i]
-			o.(*widget.Label).SetText(fmt.Sprintf("[%s] %s", entry.Timestamp.Format("2006-01-02 15:04"), entry.Content))
+			content := entry.Content
+			if len(content) > maxLength {
+				content = content[:maxLength] + "..."
+			}
+			o.(*widget.Label).SetText(fmt.Sprintf("[%s] %s", entry.Timestamp.Format("2006-01-02 15:04"), content))
 		},
 	)
 

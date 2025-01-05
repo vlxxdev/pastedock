@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"fyne.io/fyne/v2/widget"
 	"golang.design/x/clipboard"
 	"log"
 	"time"
@@ -30,7 +29,12 @@ func (cm *ClipboardManager) AddEntry(content string) {
 	cm.History = append(cm.History, entry)
 }
 
-func (cm *ClipboardManager) MonitorClipboard(historyList *widget.List) {
+func (cm *ClipboardManager) ClearHistory() {
+	cm.History = nil
+	log.Println("Clipboard history cleared")
+}
+
+func (cm *ClipboardManager) MonitorClipboard(newEntries chan<- ClipboardEntry) {
 	lastCopied := ""
 	for {
 		copiedBytes := clipboard.Read(clipboard.FmtText)
@@ -41,7 +45,10 @@ func (cm *ClipboardManager) MonitorClipboard(historyList *widget.List) {
 			cm.AddEntry(copiedText)
 			log.Printf("New clipboard entry: %s", copiedText)
 
-			historyList.Refresh()
+			newEntries <- ClipboardEntry{
+				Content:   copiedText,
+				Timestamp: time.Now(),
+			}
 		}
 
 		time.Sleep(1 * time.Second)
