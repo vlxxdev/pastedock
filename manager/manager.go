@@ -2,7 +2,6 @@ package manager
 
 import (
 	"golang.design/x/clipboard"
-	"log"
 	"time"
 )
 
@@ -31,7 +30,6 @@ func (cm *ClipboardManager) AddEntry(content string) {
 
 func (cm *ClipboardManager) ClearHistory() {
 	cm.History = nil
-	log.Println("Clipboard history cleared")
 }
 
 func (cm *ClipboardManager) MonitorClipboard(newEntries chan<- ClipboardEntry) {
@@ -43,7 +41,6 @@ func (cm *ClipboardManager) MonitorClipboard(newEntries chan<- ClipboardEntry) {
 		if copiedText != "" && copiedText != lastCopied {
 			lastCopied = copiedText
 			cm.AddEntry(copiedText)
-			log.Printf("New clipboard entry: %s", copiedText)
 
 			newEntries <- ClipboardEntry{
 				Content:   copiedText,

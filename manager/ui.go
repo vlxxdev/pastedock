@@ -4,20 +4,29 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"golang.design/x/clipboard"
-	"log"
 )
 
-const maxLength = 100
+const maxLength = 50
+const removeButtonSymbol = "X"
 
-func (cm *ClipboardManager) CreateUI() (fyne.CanvasObject, *widget.List) {
-	historyList := widget.NewList(
+func (cm *ClipboardManager) CreateUI(mainWindow fyne.Window) (fyne.CanvasObject, *widget.List) {
+	var historyList *widget.List
+
+	historyList = widget.NewList(
 		func() int {
 			return len(cm.History)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{})
+			label := widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{})
+			deleteButton := widget.NewButton(removeButtonSymbol, nil)
+
+			return container.NewHBox(
+				container.New(layout.NewMaxLayout(), label),
+				container.New(layout.NewCenterLayout(), deleteButton),
+			)
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
 			entry := cm.History[i]
@@ -25,7 +34,16 @@ func (cm *ClipboardManager) CreateUI() (fyne.CanvasObject, *widget.List) {
 			if len(content) > maxLength {
 				content = content[:maxLength] + "..."
 			}
-			o.(*widget.Label).SetText(fmt.Sprintf("[%s] %s", entry.Timestamp.Format("2006-01-02 15:04"), content))
+
+			hBox := o.(*fyne.Container)
+			label := hBox.Objects[0].(*fyne.Container).Objects[0].(*widget.Label)
+			deleteButton := hBox.Objects[1].(*fyne.Container).Objects[0].(*widget.Button)
+
+			label.SetText(fmt.Sprintf("[%s] %s", entry.Timestamp.Format("2006-01-02 15:04"), content))
+			deleteButton.OnTapped = func() {
+				cm.History = append(cm.History[:i], cm.History[i+1:]...)
+				historyList.Refresh()
+			}
 		},
 	)
 
@@ -33,19 +51,16 @@ func (cm *ClipboardManager) CreateUI() (fyne.CanvasObject, *widget.List) {
 		if id >= 0 && id < len(cm.History) {
 			entry := cm.History[id]
 			clipboard.Write(clipboard.FmtText, []byte(entry.Content))
-			log.Printf("Copied back to clipboard: %s\n", entry.Content)
 		}
 	}
 
 	clearClipboardButton := widget.NewButton("Clear Clipboard", func() {
 		clipboard.Write(clipboard.FmtText, []byte(""))
-		log.Println("Clipboard cleared")
 	})
 
 	clearHistoryButton := widget.NewButton("Clear History", func() {
 		cm.History = nil
 		historyList.Refresh()
-		log.Println("Clipboard history cleared")
 	})
 
 	buttons := container.NewHBox(
@@ -53,11 +68,14 @@ func (cm *ClipboardManager) CreateUI() (fyne.CanvasObject, *widget.List) {
 		clearHistoryButton,
 	)
 
-	return container.NewBorder(
+	historyListContainer := container.NewScroll(historyList)
+
+	ui := container.NewBorder(
 		nil,
 		buttons,
 		nil,
 		nil,
-		historyList,
-	), historyList
+		historyListContainer,
+	)
+	return ui, historyList
 }

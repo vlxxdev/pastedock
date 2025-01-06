@@ -25,11 +25,12 @@ func main() {
 
 	icon, err := fyne.LoadResourceFromPath("icon.png")
 	if err != nil {
-		log.Fatalf("Failed to load tray icon: %v", err)
+		log.Printf("Failed to load tray icon: %v", err)
+	} else {
+		a.SetIcon(icon)
 	}
 
-	a.SetIcon(icon)
-	ui, historyList := cm.CreateUI()
+	ui, historyList := cm.CreateUI(mainWindow)
 
 	go func() {
 		for range newEntries {
@@ -38,12 +39,16 @@ func main() {
 	}()
 
 	mainWindow.SetContent(ui)
-	mainWindow.Resize(fyne.NewSize(400, 500))
+	mainWindow.Resize(fyne.NewSize(475, 500))
+	settingsManager := manager.NewSettings(a)
 
 	if desk, ok := a.(desktop.App); ok {
 		trayMenu := fyne.NewMenu("Clipboard Manager",
 			fyne.NewMenuItem("Show History", func() {
 				mainWindow.Show()
+			}),
+			fyne.NewMenuItem("Settings", func() {
+				settingsManager.ShowSettingsWindow()
 			}),
 			fyne.NewMenuItem("Quit", func() {
 				a.Quit()
